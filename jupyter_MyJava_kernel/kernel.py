@@ -723,6 +723,10 @@ class MyKernel(Kernel):
             if bcancel_exec:return  retinfo
             bcancel_exec,retstr=self.raise_plugin(code,magics,return_code,fil_ename,2,2)
             if bcancel_exec:return  self.get_retinfo()
+            if len(self.addkey2dict(magics,'onlycompile'))>0:
+                self._log("only run compile \n")
+                bcancel_exec=True
+                return retinfo
             if len(self.addkey2dict(magics,'noruncode'))>0:
                 bcancel_exec=True
                 return self.get_retinfo()
@@ -1159,8 +1163,8 @@ class JavaKernel(MyKernel):
         retstr=''
         class_filename=''
         outpath=''
-        magics['pubclass']
-        self._log(magics['pubclass']+"\n")
+        # magics['pubclass']
+        # self._log(magics['pubclass']+"\n")
         source_file=self.create_codetemp_file(magics,code,suffix='.java')
         newsrcfilename=source_file.name
         fil_ename=newsrcfilename
