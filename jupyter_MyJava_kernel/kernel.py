@@ -1041,12 +1041,12 @@ class JavaKernel(MyKernel):
     implementation_version = '1.0'
     language = 'Java'
     language_version = '18'
-    language_info = {'name': 'text/x-csrc',
-                     'mimetype': 'text/x-csrc',
+    language_info = {'name': 'text/java',
+                     'mimetype': 'text/java',
                      'file_extension': '.java'}
     runfiletype='class'
     banner = "MyJava kernel.\n" \
-             "Uses gcc, compiles in C11, and creates source code files and executables in temporary folder.\n"
+             "Uses JavaC, compiles in Java, and creates source code files and executables in temporary folder.\n"
     main_head = "#include <stdio.h>\n" \
             "#include <math.h>\n" \
             "int main(int argc, char* argv[], char** env){\n"
