@@ -140,10 +140,10 @@ class RealTimeSubprocess(subprocess.Popen):
             return res
         stderr_contents = read_all_from_queue(self._stderr_queue)
         if stderr_contents:
-            self._write_to_stderr(stderr_contents.decode())
+            self._write_to_stderr(stderr_contents.decode('UTF-8', errors='ignore'))
         stdout_contents = read_all_from_queue(self._stdout_queue)
         if stdout_contents:
-            contents = stdout_contents.decode()
+            contents = stdout_contents.decode('UTF-8', errors='ignore')
             # if there is input request, make output and then
             # ask frontend for input
             start = contents.find(self.__class__.inputRequest)
@@ -1119,6 +1119,40 @@ class JavaKernel(MyKernel):
         self.linkMaths = True # always link math library
         self.wAll = True # show all warnings by default
         self.wError = False # but keep comipiling for warnings
+    def compile_with_javac(self, source_filename, binary_filepath=None, cflags=None, ldflags=None,env=None,coptions=None):
+        # cflags = ['-std=c89', '-pedantic', '-fPIC', '-shared', '-rdynamic'] + cflags
+        outpath=os.path.dirname(source_filename)
+        sf = os.path.basename(source_filename)
+        binary_filename = sf.split(".")[0]
+        # if self.linkMaths:
+        #     cflags = cflags + ['-lm']
+        # if self.wError:
+        #     cflags = cflags + ['-Werror']
+        # if self.wAll:
+        #     cflags = cflags + ['-Wall']
+        # if self.readOnlyFileSystem:
+        #     cflags = ['-DREAD_ONLY_FILE_SYSTEM'] + cflags
+        # if self.bufferedOutput:
+        #     cflags = ['-DBUFFERED_OUTPUT'] + cflags
+        # target=os.path.dirname(binary_filepath)
+        index=-1
+        if coptions==None:
+            coptions=[]
+        for s in coptions:
+            index=index+1
+            if s=='-d':
+                outpath=coptions[index+1]
+                if not outpath.startswith('-'):
+                    #剔除 -d参数和值
+                    outpath=coptions.pop(index+1)
+                    coptions.pop(index)
+            else:
+                if binary_filepath!=None:
+                    outpath=binary_filepath
+        args = ['javac']+coptions+ ['-d', outpath]+[ source_filename]
+        self._logln(' '.join((' '+ str(s) for s in args)))
+        binary_filename=os.path.join(outpath,binary_filename)
+        return self.create_jupyter_subprocess(args,env=env),binary_filename+".class",args
     def _exec_javac_(self,source_filename,magics):
         self._write_to_stdout('Generating binary file\n')
         p,outfile,ccmd = self.compile_with_javac(
