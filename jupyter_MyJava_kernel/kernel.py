@@ -1262,7 +1262,7 @@ class JavaKernel(MyKernel):
     implementation = 'jupyter-MyC-kernel'
     implementation_version = '1.0'
     language = 'Java'
-    language_version = '18'
+    language_version = ''
     language_info = {'name': 'text/java',
                      'mimetype': 'text/java',
                      'file_extension': '.java'}
