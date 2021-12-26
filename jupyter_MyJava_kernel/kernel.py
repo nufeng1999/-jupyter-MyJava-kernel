@@ -1319,6 +1319,7 @@ class JavaKernel(MyKernel):
         self._logln(' '.join((' '+ str(s) for s in args)))
         binary_filename=os.path.join(outpath,binary_filename)
         return self.create_jupyter_subprocess(args,env=env,magics=magics),binary_filename+".class",args
+##调用 javac 编译源代码
     def _exec_javac_(self,source_filename,magics):
         self._write_to_stdout('Generating binary file\n')
         p,outfile,ccmd = self.compile_with_javac(
@@ -1329,12 +1330,11 @@ class JavaKernel(MyKernel):
             self.get_magicsbykey(magics,'env'),
             self.get_magicsSvalue(magics,'coptions')
             )
-        while p.poll() is None:
-            p.write_contents()
+        returncode=p.wait_end(magics)
         p.write_contents()
-        if p.returncode != 0:  # Compilation failed
+        if returncode != 0:  # Compilation failed
             self._logln(''.join((str(s) for s in ccmd)),3)
-            self._logln("Javac exited with code {}, the executable will not be executed".format(p.returncode),3)
+            self._logln("Javac exited with code {}, the executable will not be executed".format(returncode),3)
             # delete source files before exit
             # os.remove(source_filename)
             # os.remove(binary_file.name)
