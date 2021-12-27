@@ -781,7 +781,7 @@ echo "OK"
         try:
             if env==None or len(env)<1:
                 env=os.environ
-            if magics!=None and len(self.addmagicsBkey(magics,'runinterm'))>0:
+            if magics!=None and magics['status']=='' and len(self.addmagicsBkey(magics,'runinterm'))>0:
                 self.inittermcmd(magics)
                 if len(magics['_st']['term'])<1:
                     self._logln("no term！",2)
@@ -1322,6 +1322,7 @@ class JavaKernel(MyKernel):
 ##调用 javac 编译源代码
     def _exec_javac_(self,source_filename,magics):
         self._write_to_stdout('Generating binary file\n')
+        magics['status']='compiling'
         p,outfile,ccmd = self.compile_with_javac(
             source_filename, 
             None,
@@ -1332,6 +1333,7 @@ class JavaKernel(MyKernel):
             )
         returncode=p.wait_end(magics)
         p.write_contents()
+        magics['status']=''
         if returncode != 0:  # Compilation failed
             self._logln(''.join((str(s) for s in ccmd)),3)
             self._logln("Javac exited with code {}, the executable will not be executed".format(returncode),3)
