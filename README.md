@@ -1,5 +1,8 @@
-# MyJava kernel for Jupyter
-[Example](https://github.com/nufeng1999/jupyter-MyJava-kernel/blob/master/example/jupyter_MyJava_readme.ipynb "Example")
+![](https://img.shields.io/badge/Jupyter-Kernel-green?link=https://jupyter.org/&link=https://github.com/jupyter/jupyter/wiki/Jupyter-kernels) ![](https://img.shields.io/badge/MyJava-Kernel-orange) ![](https://img.shields.io/github/watchers/nufeng1999/jupyter-MyJava-kernel) <img alt="ViewCount" src="https://views.whatilearened.today/views/github/nufeng1999/jupyter-MyJava-kernel.svg">
+    <a href="https://github.com/nufeng1999/jupyter-MyJava-kernel"><img alt="GitHub Clones" src="https://img.shields.io/badge/dynamic/json?color=success&label=Clone&query=count&url=https://raw.githubusercontent.com/nufeng1999/jupyter-MyJava-kernel/master/clone.json&logo=github"></a>
+# MyJava kernel for Jupyter  
+  
+[Example](https://github.com/nufeng1999/jupyter-MyJava-kernel/blob/master/example/MyJava.ipynb "Example")
 * Make sure you have the following requirements installed:
   * Java
   * jupyter
