@@ -13,3 +13,6 @@ test*
 *.bak
 *.old
 *old.*
+*.java
+*.class
+META-INF/
