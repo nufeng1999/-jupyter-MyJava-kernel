@@ -81,7 +81,10 @@ class JavaKernel(MyKernel):
         self.kernelinfo="[MyJavaKernel{0}]".format(time.strftime("%H%M%S", time.localtime()))
         
 #################
-    def compile_with_javac(self, source_filename, binary_filepath=None, cflags=None, ldflags=None,env=None,coptions=None):
+    def compile_with_javac(self, source_filename, 
+        binary_filepath=None, cflags=None, 
+        ldflags=None,env=None,
+        coptions=None,magics=None):
         # cflags = ['-std=c89', '-pedantic', '-fPIC', '-shared', '-rdynamic'] + cflags
         outpath=os.path.dirname(source_filename)
         sf = os.path.basename(source_filename)
@@ -112,36 +115,37 @@ class JavaKernel(MyKernel):
                 if binary_filepath!=None:
                     outpath=binary_filepath
         args = ['javac']+coptions+ ['-d', outpath]+[ source_filename]
-        self._logln(' '.join((' '+ str(s) for s in args)))
+        self.mymagics._logln(' '.join((' '+ str(s) for s in args)))
         binary_filename=os.path.join(outpath,binary_filename)
-        return self.create_jupyter_subprocess(args,env=env,magics=magics),binary_filename+".class",args
+        return self.mymagics.create_jupyter_subprocess(args,env=env,magics=magics),binary_filename+".class",args
 ##调用 javac 编译源代码
     def _exec_javac_(self,source_filename,magics):
-        self._write_to_stdout('Generating binary file\n')
+        self.mymagics._logln('Generating binary file')
         magics['status']='compiling'
         p,outfile,ccmd = self.compile_with_javac(
             source_filename, 
             None,
-            self.get_magicsSvalue(magics,'cflags'),
-            self.get_magicsSvalue(magics,'ldflags'),
-            self.get_magicsbykey(magics,'env'),
-            self.get_magicsSvalue(magics,'coptions')
+            self.mymagics.get_magicsSvalue(magics,'cflags'),
+            self.mymagics.get_magicsSvalue(magics,'ldflags'),
+            self.mymagics.get_magicsbykey(magics,'env'),
+            self.mymagics.get_magicsSvalue(magics,'coptions'),
+            magics
             )
         returncode=p.wait_end(magics)
         p.write_contents()
         magics['status']=''
         if returncode != 0:  # Compilation failed
-            self._logln(''.join((str(s) for s in ccmd)),3)
-            self._logln("Javac exited with code {}, the executable will not be executed".format(returncode),3)
+            self.mymagics._logln(''.join((str(s) for s in ccmd)),3)
+            self.mymagics._logln("Javac exited with code {}, the executable will not be executed".format(returncode),3)
             # delete source files before exit
             # os.remove(source_filename)
             # os.remove(binary_file.name)
         return p.returncode,outfile
 ##do_runcode
-    def do_runcode(self,return_code,fil_ename,class_filename,outpath,magics,code, silent, store_history=True,
+    def do_runcode(self,return_code,file_name,class_filename,outpath,magics,code, silent, store_history=True,
                     user_expressions=None, allow_stdin=True):
         return_code=return_code
-        fil_ename=fil_ename
+        file_name=file_name
         bcancel_exec=False
         retinfo=self.mymagics.get_retinfo()
         retstr=''
@@ -151,11 +155,11 @@ class JavaKernel(MyKernel):
         self.mymagics._write_to_stdout("The process :"+class_filename+"\n")
         ################# repl mode run code files
         #FIXME:
-        if magics['st']['runmode']=='repl':
-            self.mymagics._start_replprg('java',magics['st']['joptions']+[mainclass] + magics['st']['args'],magics)
+        if magics['_st']['runmode']=='repl':
+            self.mymagics._start_replprg('java',magics['_st']['joptions']+[mainclass] + magics['_st']['args'],magics)
             return_code=p.returncode
-            bcancel_exec,retstr=self.mymagics.raise_plugin(code,magics,return_code,fil_ename,3,2)
-            return bcancel_exec,retinfo,magics, code,fil_ename,retstr
+            bcancel_exec,retstr=self.mymagics.raise_plugin(code,magics,return_code,file_name,3,2)
+            return bcancel_exec,retinfo,magics, code,file_name,retstr
         ############################################
     ############################################
         #################dynamically load and execute code
@@ -164,15 +168,15 @@ class JavaKernel(MyKernel):
         #     p = self.create_jupyter_subprocess([self.master_path, class_filename] + magics['args'],env=self.addkey2dict(magics,'env'))
         # #################
         # else:
-        cmdstr = ['java']+magics['st']['joptions']+[mainclass] + magics['st']['args']
+        cmdstr = ['java']+magics['_st']['joptions']+[mainclass] + magics['_st']['args']
         self.mymagics._log(' '.join((' '+ str(s) for s in cmdstr))+"\n") 
-        p = self.mymagics.create_jupyter_subprocess(['java']+magics['st']['joptions']+[mainclass] + magics['st']['args'],env=self.mymagics.addkey2dict(magics,'env'),magics=magics)
+        p = self.mymagics.create_jupyter_subprocess(['java']+magics['_st']['joptions']+[mainclass] + magics['_st']['args'],env=self.mymagics.addkey2dict(magics,'env'),magics=magics)
         self.mymagics.subprocess=p
         self.mymagics.g_rtsps[str(p.pid)]=p
         return_code=p.returncode
         ##代码启动后
-        bcancel_exec,retstr=self.mymagics.raise_plugin(code,magics,return_code,fil_ename,3,2)
-        # if bcancel_exec:return bcancel_exec,retinfo,magics, code,fil_ename,retstr
+        bcancel_exec,retstr=self.mymagics.raise_plugin(code,magics,return_code,file_name,3,2)
+        # if bcancel_exec:return bcancel_exec,retinfo,magics, code,file_name,retstr
         
         if len(self.mymagics.addkey2dict(magics,'showpid'))>0:
             self.mymagics._write_to_stdout("The process PID:"+str(p.pid)+"\n")
@@ -185,33 +189,33 @@ class JavaKernel(MyKernel):
             # os.remove(class_filename)
         # if p.returncode != 0:
             # self._write_to_stderr("[C kernel] Executable exited with code {}".format(p.returncode))
-        return bcancel_exec,retinfo,magics, code,fil_ename,retstr
+        return bcancel_exec,retinfo,magics, code,file_name,retstr
 ##do_compile_code
-    def do_compile_code(self,return_code,fil_ename,magics,code, silent, store_history=True,
+    def do_compile_code(self,return_code,file_name,magics,code, silent, store_history=True,
                     user_expressions=None, allow_stdin=True):
         return_code=0
-        fil_ename=fil_ename
-        sourcefilename=fil_ename
+        file_name=file_name
+        sourcefilename=file_name
         bcancel_exec=False
         retinfo=self.mymagics.get_retinfo()
         retstr=''
         
-        returncode,class_filename=self._exec_javac_(fil_ename,magics)
-        fil_ename=class_filename
+        returncode,class_filename=self._exec_javac_(file_name,magics)
+        file_name=class_filename
         outpath=os.path.dirname(class_filename)
         sf = os.path.basename(class_filename)
         class_filename = sf.split(".")[0]
         return_code=returncode
         mainclass=class_filename
         
-        if returncode!=0:return True,self.mymagics.get_retinfo(),magics, code,fil_ename,class_filename,outpath,retstr
+        if returncode!=0:return True,self.mymagics.get_retinfo(),magics, code,file_name,class_filename,outpath,retstr
         # Generate executable file :end
-        return bcancel_exec,retinfo,magics, code,fil_ename,class_filename,outpath,retstr
+        return bcancel_exec,retinfo,magics, code,file_name,class_filename,outpath,retstr
 ##do_create_codefile
     def do_create_codefile(self,magics,code, silent, store_history=True,
                     user_expressions=None, allow_stdin=True):
         return_code=0
-        fil_ename=''
+        file_name=''
         bcancel_exec=False
         retinfo=self.mymagics.get_retinfo()
         retstr=''
@@ -222,22 +226,22 @@ class JavaKernel(MyKernel):
         # self._log(magics['pubclass']+"\n")
         source_file=self.mymagics.create_codetemp_file(magics,code,suffix='.java')
         newsrcfilename=source_file.name
-        fil_ename=newsrcfilename
+        file_name=newsrcfilename
         srcpath=os.path.dirname(source_file.name)
         sf = os.path.basename(source_file.name)
         newsrcfilename=os.path.join(srcpath,magics['pubclass']+".java")
         # self._log(newsrcfilename+"\n")
         os.rename(source_file.name ,newsrcfilename)
-        fil_ename=newsrcfilename
-        outpath=os.path.dirname(fil_ename)
-        sf = os.path.basename(fil_ename)
+        file_name=newsrcfilename
+        outpath=os.path.dirname(file_name)
+        sf = os.path.basename(file_name)
         class_filename = sf.split(".")[0]
         
         return_code=True
         ############# only run gcc，no not run executable file
         if len(self.mymagics.addkey2dict(magics,'onlyrungcc'))>0:
             self.mymagics._log("only run gcc \n")
-        return  bcancel_exec,self.mymagics.get_retinfo(),magics, code,fil_ename,class_filename,outpath,retstr
+        return  bcancel_exec,self.mymagics.get_retinfo(),magics, code,file_name,class_filename,outpath,retstr
             
             
 ##do_preexecute
@@ -247,7 +251,7 @@ class JavaKernel(MyKernel):
         retinfo=self.mymagics.get_retinfo()
         ##扫描代码
         #############send replcmd's command
-        if magics['st']['runmode']=='repl':
+        if magics['_st']['runmode']=='repl':
             if hasattr(self, 'replcmdwrapper'):
                 if self.mymagics.replcmdwrapper :
                     bcancel_exec=True
