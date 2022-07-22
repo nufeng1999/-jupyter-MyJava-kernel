@@ -30,7 +30,7 @@ class MyKernel(Kernel):
     main_foot = "\nreturn 0;\n}"
     def __init__(self, *args, **kwargs):
         super(MyKernel, self).__init__(*args, **kwargs)
-        self.runfiletype = 'script'
+        self.runfiletype = 'class'
         self.kernelinfo = '[MyKernel]'
         self.mymagics = MyMagics(jkobj=self, runfiletype=self.runfiletype)
     def get_language_info(self):
